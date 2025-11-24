@@ -1,27 +1,28 @@
 'use client';
 
-// Chat interface component
+// Chat interface component with tool parts rendering
 
-import { useState } from 'react';
-import { ConversationMessage } from '@/lib/types';
+import { UIMessage } from 'ai';
+import { ChartDisplay } from './ChartDisplay';
+import { ColorScheme } from '@/lib/types';
 
 interface ChatInterfaceProps {
-  onSendMessage: (message: string) => Promise<void>;
-  messages: ConversationMessage[];
+  messages: UIMessage[];
+  input: string;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   isLoading: boolean;
+  colorScheme: ColorScheme;
 }
 
-export function ChatInterface({ onSendMessage, messages, isLoading }: ChatInterfaceProps) {
-  const [input, setInput] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
-
-    const message = input.trim();
-    setInput('');
-    await onSendMessage(message);
-  };
+export function ChatInterface({
+  messages,
+  input,
+  handleInputChange,
+  handleSubmit,
+  isLoading,
+  colorScheme
+}: ChatInterfaceProps) {
 
   return (
     <div className="flex flex-col h-full">
@@ -33,30 +34,91 @@ export function ChatInterface({ onSendMessage, messages, isLoading }: ChatInterf
             <p>Ik kan staaf- en lijngrafieken maken in FD- of BNR-kleuren.</p>
             <p className="mt-2 text-sm">Probeer bijvoorbeeld:</p>
             <ul className="mt-2 text-sm text-left max-w-md mx-auto">
-              <li>• "Maak een staafgrafiek met verkoopcijfers"</li>
-              <li>• "Laat me een lijngrafiek zien van de groei"</li>
+              <li>• "Maak een staafgrafiek met verkoopcijfers Q1=100, Q2=150, Q3=175, Q4=200"</li>
+              <li>• "Laat me een lijngrafiek zien van de groei: Jan=10, Feb=15, Mrt=20"</li>
               <li>• Upload een Excel-bestand met data</li>
             </ul>
           </div>
         )}
-        
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                msg.role === 'user'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-900'
-              }`}
-            >
-              <p className="whitespace-pre-wrap">{msg.content}</p>
-            </div>
+
+        {messages.map((message) => (
+          <div key={message.id} className="space-y-4">
+            {/* User message */}
+            {message.role === 'user' && (
+              <div className="flex justify-end">
+                <div className="max-w-[70%] rounded-lg px-4 py-2 bg-blue-500 text-white">
+                  {message.parts?.map((part, idx) => {
+                    if (part.type === 'text') {
+                      return <p key={idx} className="whitespace-pre-wrap">{part.text}</p>;
+                    }
+                    return null;
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Assistant message with parts */}
+            {message.role === 'assistant' && (
+              <div className="space-y-4">
+                {message.parts?.map((part, index) => {
+                  // Text part
+                  if (part.type === 'text') {
+                    return (
+                      <div key={index} className="flex justify-start">
+                        <div className="max-w-[70%] rounded-lg px-4 py-2 bg-gray-200 text-gray-900">
+                          <p className="whitespace-pre-wrap">{part.text}</p>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Bar chart tool
+                  if (part.type === 'tool-create_bar_chart') {
+                    if (part.state === 'input-available') {
+                      return (
+                        <div key={index} className="flex justify-start">
+                          <div className="rounded-lg px-4 py-2 bg-yellow-100 text-yellow-900">
+                            <p>Staafgrafiek aan het maken...</p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    if (part.state === 'output-available' && part.output) {
+                      return (
+                        <div key={index} className="w-full">
+                          <ChartDisplay data={part.output as any} colorScheme={colorScheme} />
+                        </div>
+                      );
+                    }
+                  }
+
+                  // Line chart tool
+                  if (part.type === 'tool-create_line_chart') {
+                    if (part.state === 'input-available') {
+                      return (
+                        <div key={index} className="flex justify-start">
+                          <div className="rounded-lg px-4 py-2 bg-yellow-100 text-yellow-900">
+                            <p>Lijngrafiek aan het maken...</p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    if (part.state === 'output-available' && part.output) {
+                      return (
+                        <div key={index} className="w-full">
+                          <ChartDisplay data={part.output as any} colorScheme={colorScheme} />
+                        </div>
+                      );
+                    }
+                  }
+
+                  return null;
+                })}
+              </div>
+            )}
           </div>
         ))}
-        
+
         {isLoading && (
           <div className="flex justify-start">
             <div className="bg-gray-200 text-gray-900 rounded-lg px-4 py-2">
@@ -72,7 +134,7 @@ export function ChatInterface({ onSendMessage, messages, isLoading }: ChatInterf
           <input
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleInputChange}
             placeholder="Typ je bericht..."
             className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
