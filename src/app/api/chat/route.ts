@@ -1,39 +1,23 @@
-// API route for chat interactions
+// API route for chat interactions using AI SDK UI pattern
 
-import { NextRequest, NextResponse } from 'next/server';
-import { processAgentRequest } from '@/features/agent/agent-core';
+import { openai } from '@ai-sdk/openai';
+import { streamText, stepCountIs, convertToModelMessages } from 'ai';
+import { getAgentTools } from '@/features/agent/tools';
+import { getSystemPrompt } from '@/features/agent/prompts';
 import { ChartEngine } from '@/features/charts/chart-engine';
-import { ConversationMessage } from '@/lib/types';
 
 const chartEngine = new ChartEngine('./public/charts');
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { message, conversationHistory = [] } = body;
+export async function POST(request: Request) {
+  const { messages } = await request.json();
 
-    if (!message || typeof message !== 'string') {
-      return NextResponse.json(
-        { error: 'Bericht is verplicht' },
-        { status: 400 }
-      );
-    }
+  const result = streamText({
+    model: openai('gpt-5'),
+    system: getSystemPrompt(),
+    messages: convertToModelMessages(messages),
+    tools: getAgentTools(chartEngine),
+    stopWhen: stepCountIs(5),
+  });
 
-    const response = await processAgentRequest(
-      message,
-      conversationHistory as ConversationMessage[],
-      chartEngine
-    );
-
-    return NextResponse.json(response);
-  } catch (error) {
-    console.error('Chat API error:', error);
-    return NextResponse.json(
-      { 
-        error: 'Er is een fout opgetreden bij het verwerken van je verzoek',
-        details: error instanceof Error ? error.message : 'Onbekende fout'
-      },
-      { status: 500 }
-    );
-  }
+  return result.toUIMessageStreamResponse();
 }
