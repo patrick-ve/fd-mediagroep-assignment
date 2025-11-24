@@ -1,7 +1,7 @@
 // Core agent logic using Vercel AI SDK
 
 import { openai } from '@ai-sdk/openai';
-import { generateText } from 'ai';
+import { generateText, stepCountIs } from 'ai';
 import { getAgentTools } from './tools';
 import { getSystemPrompt, getUserMessageTemplate } from './prompts';
 import { ChartEngine } from '../charts/chart-engine';
@@ -24,15 +24,15 @@ export async function processAgentRequest(
         { role: 'user', content: formattedMessage }
       ],
       tools: getAgentTools(chartEngine),
-      maxSteps: 5
+      stopWhen: stepCountIs(5)
     });
     
     // Extract chart path from tool results if available
     let chartPath: string | undefined;
     if (result.toolResults && result.toolResults.length > 0) {
       const lastResult = result.toolResults[result.toolResults.length - 1];
-      if (lastResult.result && typeof lastResult.result === 'object') {
-        const resultObj = lastResult.result as any;
+      if ('output' in lastResult && lastResult.output && typeof lastResult.output === 'object') {
+        const resultObj = lastResult.output as any;
         chartPath = resultObj.filePath;
       }
     }

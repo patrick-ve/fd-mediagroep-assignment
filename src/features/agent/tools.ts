@@ -49,16 +49,17 @@ export function getAgentTools(chartEngine: ChartEngine) {
             { labels, values, title, unit, chartType: 'bar' },
             colorScheme
           );
-          return { 
-            success: true, 
-            filePath: result.filePath,
-            message: `Staafgrafiek succesvol aangemaakt: ${result.filePath}`
+          return {
+            labels,
+            values,
+            title,
+            unit,
+            chartType: 'bar' as const,
+            colorScheme,
+            filePath: result.filePath
           };
         } catch (error) {
-          return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Onbekende fout'
-          };
+          throw new Error(error instanceof Error ? error.message : 'Onbekende fout');
         }
       }
     }),
@@ -107,16 +108,17 @@ export function getAgentTools(chartEngine: ChartEngine) {
             { labels, values, title, unit, chartType: 'line' },
             colorScheme
           );
-          return { 
-            success: true, 
-            filePath: result.filePath,
-            message: `Lijngrafiek succesvol aangemaakt: ${result.filePath}`
+          return {
+            labels,
+            values,
+            title,
+            unit,
+            chartType: 'line' as const,
+            colorScheme,
+            filePath: result.filePath
           };
         } catch (error) {
-          return {
-            success: false,
-            error: error instanceof Error ? error.message : 'Onbekende fout'
-          };
+          throw new Error(error instanceof Error ? error.message : 'Onbekende fout');
         }
       }
     })
