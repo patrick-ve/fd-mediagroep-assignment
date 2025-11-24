@@ -1,11 +1,12 @@
-// Chart engine using d3-node for server-side SVG generation
+// Chart engine using ECharts for server-side and client-side rendering
 
-import { D3Node } from 'd3-node';
-import * as d3 from 'd3';
+import * as echarts from 'echarts';
 import fs from 'fs/promises';
 import path from 'path';
 import { ChartData, ColorScheme } from '@/lib/types';
 import { BRAND_COLORS } from './colors';
+
+export type EChartsOption = echarts.EChartsOption;
 
 export class ChartEngine {
   private outputDir: string;
@@ -25,226 +26,233 @@ export class ChartEngine {
   async createBarChart(
     data: ChartData,
     colorScheme: ColorScheme
-  ): Promise<{ svgString: string; filePath: string }> {
+  ): Promise<{ svgString: string; filePath: string; echartsOptions: EChartsOption }> {
     await this.ensureOutputDir();
 
     const colors = BRAND_COLORS[colorScheme];
-    const d3n = new D3Node();
+    const echartsOptions = this.getBarChartOptions(data, colors);
 
-    const width = 800;
-    const height = 600;
-    const margin = { top: 60, right: 40, bottom: 80, left: 80 };
-    const chartWidth = width - margin.left - margin.right;
-    const chartHeight = height - margin.top - margin.bottom;
+    // Server-side rendering
+    const chart = echarts.init(null, null, {
+      renderer: 'svg',
+      ssr: true,
+      width: 800,
+      height: 600
+    });
 
-    const svg = d3n.createSVG(width, height);
+    chart.setOption(echartsOptions);
+    const svgString = chart.renderToSVGString();
+    chart.dispose();
 
-    // Background
-    svg
-      .append('rect')
-      .attr('width', width)
-      .attr('height', height)
-      .attr('fill', colors.background);
-
-    const g = svg
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
-
-    // Scales
-    const x = d3
-      .scaleBand()
-      .domain(data.labels)
-      .range([0, chartWidth])
-      .padding(0.2);
-
-    const y = d3
-      .scaleLinear()
-      .domain([0, d3.max(data.values) || 0])
-      .nice()
-      .range([chartHeight, 0]);
-
-    // Bars
-    g.selectAll('.bar')
-      .data(data.values)
-      .enter()
-      .append('rect')
-      .attr('class', 'bar')
-      .attr('x', (_d: number, i: number) => x(data.labels[i]) || 0)
-      .attr('y', (d: number) => y(d))
-      .attr('width', x.bandwidth())
-      .attr('height', (d: number) => chartHeight - y(d))
-      .attr('fill', colors.primary);
-
-    // X Axis
-    g.append('g')
-      .attr('transform', `translate(0,${chartHeight})`)
-      .call(d3.axisBottom(x))
-      .selectAll('text')
-      .attr('fill', colors.content)
-      .style('font-size', '12px')
-      .attr('transform', 'rotate(-45)')
-      .style('text-anchor', 'end');
-
-    g.selectAll('.domain, .tick line')
-      .attr('stroke', colors.content);
-
-    // Y Axis
-    g.append('g')
-      .call(d3.axisLeft(y))
-      .selectAll('text')
-      .attr('fill', colors.content)
-      .style('font-size', '12px');
-
-    g.selectAll('.domain, .tick line')
-      .attr('stroke', colors.content);
-
-    // Title
-    svg
-      .append('text')
-      .attr('x', width / 2)
-      .attr('y', 30)
-      .attr('text-anchor', 'middle')
-      .attr('fill', colors.content)
-      .style('font-size', '18px')
-      .style('font-weight', 'bold')
-      .text(data.title);
-
-    // Unit label
-    if (data.unit) {
-      svg
-        .append('text')
-        .attr('x', margin.left - 50)
-        .attr('y', height / 2)
-        .attr('text-anchor', 'middle')
-        .attr('fill', colors.content)
-        .style('font-size', '12px')
-        .attr('transform', `rotate(-90, ${margin.left - 50}, ${height / 2})`)
-        .text(data.unit);
-    }
-
-    const svgString = d3n.svgString();
     const filePath = await this.saveChart(svgString, 'bar');
 
-    return { svgString, filePath };
+    return { svgString, filePath, echartsOptions };
   }
 
   async createLineChart(
     data: ChartData,
     colorScheme: ColorScheme
-  ): Promise<{ svgString: string; filePath: string }> {
+  ): Promise<{ svgString: string; filePath: string; echartsOptions: EChartsOption }> {
     await this.ensureOutputDir();
 
     const colors = BRAND_COLORS[colorScheme];
-    const d3n = new D3Node();
+    const echartsOptions = this.getLineChartOptions(data, colors);
 
-    const width = 800;
-    const height = 600;
-    const margin = { top: 60, right: 40, bottom: 80, left: 80 };
-    const chartWidth = width - margin.left - margin.right;
-    const chartHeight = height - margin.top - margin.bottom;
+    // Server-side rendering
+    const chart = echarts.init(null, null, {
+      renderer: 'svg',
+      ssr: true,
+      width: 800,
+      height: 600
+    });
 
-    const svg = d3n.createSVG(width, height);
+    chart.setOption(echartsOptions);
+    const svgString = chart.renderToSVGString();
+    chart.dispose();
 
-    // Background
-    svg
-      .append('rect')
-      .attr('width', width)
-      .attr('height', height)
-      .attr('fill', colors.background);
-
-    const g = svg
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
-
-    // Scales
-    const x = d3
-      .scalePoint()
-      .domain(data.labels)
-      .range([0, chartWidth])
-      .padding(0.5);
-
-    const y = d3
-      .scaleLinear()
-      .domain([0, d3.max(data.values) || 0])
-      .nice()
-      .range([chartHeight, 0]);
-
-    // Line generator
-    const line = d3
-      .line<number>()
-      .x((d, i) => x(data.labels[i]) || 0)
-      .y(d => y(d));
-
-    // Draw line
-    g.append('path')
-      .datum(data.values)
-      .attr('fill', 'none')
-      .attr('stroke', colors.primary)
-      .attr('stroke-width', 3)
-      .attr('d', line);
-
-    // Draw points
-    g.selectAll('.point')
-      .data(data.values)
-      .enter()
-      .append('circle')
-      .attr('class', 'point')
-      .attr('cx', (_d: number, i: number) => x(data.labels[i]) || 0)
-      .attr('cy', (d: number) => y(d))
-      .attr('r', 5)
-      .attr('fill', colors.primary);
-
-    // X Axis
-    g.append('g')
-      .attr('transform', `translate(0,${chartHeight})`)
-      .call(d3.axisBottom(x))
-      .selectAll('text')
-      .attr('fill', colors.content)
-      .style('font-size', '12px')
-      .attr('transform', 'rotate(-45)')
-      .style('text-anchor', 'end');
-
-    g.selectAll('.domain, .tick line')
-      .attr('stroke', colors.content);
-
-    // Y Axis
-    g.append('g')
-      .call(d3.axisLeft(y))
-      .selectAll('text')
-      .attr('fill', colors.content)
-      .style('font-size', '12px');
-
-    g.selectAll('.domain, .tick line')
-      .attr('stroke', colors.content);
-
-    // Title
-    svg
-      .append('text')
-      .attr('x', width / 2)
-      .attr('y', 30)
-      .attr('text-anchor', 'middle')
-      .attr('fill', colors.content)
-      .style('font-size', '18px')
-      .style('font-weight', 'bold')
-      .text(data.title);
-
-    // Unit label
-    if (data.unit) {
-      svg
-        .append('text')
-        .attr('x', margin.left - 50)
-        .attr('y', height / 2)
-        .attr('text-anchor', 'middle')
-        .attr('fill', colors.content)
-        .style('font-size', '12px')
-        .attr('transform', `rotate(-90, ${margin.left - 50}, ${height / 2})`)
-        .text(data.unit);
-    }
-
-    const svgString = d3n.svgString();
     const filePath = await this.saveChart(svgString, 'line');
 
-    return { svgString, filePath };
+    return { svgString, filePath, echartsOptions };
+  }
+
+  private getBarChartOptions(data: ChartData, colors: { primary: string; content: string; background: string }): EChartsOption {
+    return {
+      backgroundColor: colors.background,
+      title: {
+        text: data.title,
+        left: 'center',
+        top: 20,
+        textStyle: {
+          color: colors.content,
+          fontSize: 18,
+          fontWeight: 'bold'
+        }
+      },
+      grid: {
+        left: 80,
+        right: 40,
+        top: 80,
+        bottom: 80,
+        containLabel: false
+      },
+      xAxis: {
+        type: 'category',
+        data: data.labels,
+        axisLine: {
+          lineStyle: {
+            color: colors.content
+          }
+        },
+        axisLabel: {
+          color: colors.content,
+          fontSize: 12,
+          rotate: 45
+        },
+        axisTick: {
+          lineStyle: {
+            color: colors.content
+          }
+        }
+      },
+      yAxis: {
+        type: 'value',
+        name: data.unit || '',
+        nameLocation: 'middle',
+        nameGap: 50,
+        nameTextStyle: {
+          color: colors.content,
+          fontSize: 12
+        },
+        axisLine: {
+          lineStyle: {
+            color: colors.content
+          }
+        },
+        axisLabel: {
+          color: colors.content,
+          fontSize: 12
+        },
+        splitLine: {
+          lineStyle: {
+            color: colors.content,
+            opacity: 0.2
+          }
+        },
+        axisTick: {
+          lineStyle: {
+            color: colors.content
+          }
+        }
+      },
+      series: [
+        {
+          data: data.values,
+          type: 'bar',
+          itemStyle: {
+            color: colors.primary
+          },
+          barWidth: '60%'
+        }
+      ],
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      }
+    };
+  }
+
+  private getLineChartOptions(data: ChartData, colors: { primary: string; content: string; background: string }): EChartsOption {
+    return {
+      backgroundColor: colors.background,
+      title: {
+        text: data.title,
+        left: 'center',
+        top: 20,
+        textStyle: {
+          color: colors.content,
+          fontSize: 18,
+          fontWeight: 'bold'
+        }
+      },
+      grid: {
+        left: 80,
+        right: 40,
+        top: 80,
+        bottom: 80,
+        containLabel: false
+      },
+      xAxis: {
+        type: 'category',
+        data: data.labels,
+        axisLine: {
+          lineStyle: {
+            color: colors.content
+          }
+        },
+        axisLabel: {
+          color: colors.content,
+          fontSize: 12,
+          rotate: 45
+        },
+        axisTick: {
+          lineStyle: {
+            color: colors.content
+          }
+        }
+      },
+      yAxis: {
+        type: 'value',
+        name: data.unit || '',
+        nameLocation: 'middle',
+        nameGap: 50,
+        nameTextStyle: {
+          color: colors.content,
+          fontSize: 12
+        },
+        axisLine: {
+          lineStyle: {
+            color: colors.content
+          }
+        },
+        axisLabel: {
+          color: colors.content,
+          fontSize: 12
+        },
+        splitLine: {
+          lineStyle: {
+            color: colors.content,
+            opacity: 0.2
+          }
+        },
+        axisTick: {
+          lineStyle: {
+            color: colors.content
+          }
+        }
+      },
+      series: [
+        {
+          data: data.values,
+          type: 'line',
+          smooth: true,
+          lineStyle: {
+            color: colors.primary,
+            width: 3
+          },
+          itemStyle: {
+            color: colors.primary
+          },
+          symbol: 'circle',
+          symbolSize: 8,
+          showSymbol: true
+        }
+      ],
+      tooltip: {
+        trigger: 'axis'
+      }
+    };
   }
 
   private async saveChart(svgString: string, type: string): Promise<string> {
