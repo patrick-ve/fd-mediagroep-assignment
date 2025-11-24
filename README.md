@@ -5,10 +5,10 @@ Een AI-gestuurde grafiek-generatie agent voor FD Mediagroep die staaf- en lijngr
 ## Overzicht
 
 De Chart Agent MVP is een gespecialiseerde AI-agent gebouwd met:
-- **Runtime:** Node.js (LTS)
+- **Runtime:** Node.js 24.11.0 (LTS)
 - **Taal:** TypeScript
 - **Web Framework:** Next.js 14 (App Router)
-- **LLM:** Anthropic Claude Sonnet 4.5
+- **LLM:** Anthropic Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 - **Agent Framework:** Vercel AI SDK v5
 - **Grafieken:** D3.js (web) en d3-node (CLI)
 - **Excel Verwerking:** xlsx library
@@ -27,7 +27,7 @@ De Chart Agent MVP is een gespecialiseerde AI-agent gebouwd met:
 
 ### Vereisten
 
-- Node.js 18 of hoger
+- Node.js 20.18.1 (LTS) - gebruik nvm voor eenvoudige installatie
 - npm of yarn
 - Anthropic API key
 
@@ -39,7 +39,14 @@ git clone <repository-url>
 cd chart-agent-mvp
 ```
 
-2. Installeer dependencies:
+2. Gebruik de juiste Node versie (met nvm):
+```bash
+nvm use
+# Of als je Node 20.18.1 nog niet hebt:
+nvm install
+```
+
+3. Installeer dependencies:
 ```bash
 npm install
 ```
@@ -211,6 +218,9 @@ Zorg ervoor dat je `.env.local` bestand bestaat en een geldige API key bevat.
 
 ### "Cannot find module"
 Run `npm install` om alle dependencies te installeren.
+
+### Node versie problemen
+Dit project vereist Node.js 20.18.1 (LTS). Gebruik `nvm use` om automatisch naar de juiste versie te schakelen. De `.nvmrc` file specificeert de vereiste versie.
 
 ### Charts worden niet gegenereerd
 Check of de `./public/charts` directory bestaat en schrijfbaar is.

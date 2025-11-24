@@ -6,10 +6,10 @@ The Chart Agent MVP is a focused AI agent that generates bar and line charts in 
 
 ### Technology Stack
 
-- **Runtime:** Node.js (LTS)
+- **Runtime:** Node.js 20.18.1 (LTS)
 - **Language:** TypeScript
 - **Web Framework:** Next.js 14 (App Router)
-- **LLM:** Anthropic Claude Sonnet 4.5
+- **LLM:** Anthropic Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 - **Agent Framework:** Vercel AI SDK v5 for agent orchestration, LLM integration, and memory management
 - **Charting (Web):** D3.js for client-side interactive chart rendering
 - **Charting (CLI):** d3-node for server-side SVG generation in CLI

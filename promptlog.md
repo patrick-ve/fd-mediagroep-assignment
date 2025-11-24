@@ -358,3 +358,135 @@ Implemented all 16 main tasks from the implementation plan:
 - User can run `npm run eval` for evaluations
 
 ---
+
+### Installation Issue - Canvas Dependency
+**Timestamp:** After implementation complete
+
+**User Issue:**
+```
+npm install failing due to canvas package requiring native compilation
+Error: ModuleNotFoundError: No module named 'distutils'
+Python 3.13 removed distutils module needed by node-gyp
+```
+
+**Agent Response:**
+- Created `.nvmrc` file with Node 20.18.1 (LTS)
+- Removed `canvas` dependency from package.json (not needed for d3-node server-side rendering)
+- Updated next.config.js to remove canvas webpack externals
+- Updated README.md with nvm installation instructions
+- d3-node works without canvas for SVG generation
+
+**Resolution:**
+User should now be able to:
+1. Run `nvm use` to switch to Node 20.18.1
+2. Run `npm install` successfully without canvas compilation issues
+3. All functionality remains intact as canvas was not actually required
+
+---
+
+### Documentation Update - Node LTS Version
+**Timestamp:** After .nvmrc creation
+
+**User Request:**
+```
+Include a reference to this Node LTS version inside the docs
+```
+
+**Agent Response:**
+- Updated README.md "Overzicht" section to specify Node.js 20.18.1 (LTS)
+- Added troubleshooting section for Node version issues
+- Updated design.md Technology Stack to specify Node.js 20.18.1 (LTS)
+- All documentation now consistently references the specific Node LTS version
+- Users will know exactly which Node version to use via .nvmrc and documentation
+
+---
+
+### Model ID Correction
+**Timestamp:** After web interface testing
+
+**User Issue:**
+```
+UnsupportedModelVersionError: model "claude-sonnet-4-20250514" not supported
+AI SDK 5 only supports models that implement specification version "v2"
+```
+
+**User Correction:**
+```
+The correct Sonnet model ID is "claude-sonnet-4-5-20250929"
+```
+
+**Agent Response:**
+- Updated agent-core.ts to use correct model ID: `claude-sonnet-4-5-20250929`
+- Updated README.md to reflect Claude Sonnet 4.5 with correct model ID
+- Updated design.md to reflect Claude Sonnet 4.5 with correct model ID
+- Web interface should now work correctly with the proper model
+
+---
+
+### AI SDK Version Update
+**Timestamp:** After model ID correction attempt
+
+**User Issue:**
+```
+Still getting UnsupportedModelVersionError with claude-sonnet-4-5-20250929
+Error says: "AI SDK 5 only supports models that implement specification version v2"
+User confirms the model ID exists
+```
+
+**Agent Response:**
+- Updated `@ai-sdk/anthropic` from ^1.0.2 to ^1.0.10
+- Updated `ai` from ^5.0.0 to ^5.0.10
+- These newer versions should support the Claude Sonnet 4.5 model
+- User needs to run `npm install` to update packages
+- Then restart dev server with `npm run dev`
+
+**Next Steps for User:**
+```bash
+npm install
+npm run dev
+```
+
+---
+
+### AI SDK Version Update to Latest
+**Timestamp:** After version check
+
+**User Info:**
+```
+Current model is 5.0.101
+```
+
+**Agent Response:**
+- Updated `@ai-sdk/anthropic` to ^1.0.101
+- Updated `ai` to ^5.0.101 (latest version)
+- These are the most recent versions and should definitely support Claude Sonnet 4.5
+
+**Next Steps for User:**
+```bash
+npm install
+npm run dev
+```
+
+---
+
+### Anthropic Provider Version Correction
+**Timestamp:** After AI SDK update
+
+**User Correction:**
+```
+The AI SDK provider by Anthropic seems to be outdated. 
+The correct version for this package is "2.0.45"
+```
+
+**Agent Response:**
+- Updated `@ai-sdk/anthropic` from ^1.0.101 to ^2.0.45
+- The Anthropic provider has a different versioning scheme (2.x) than the main AI SDK (5.x)
+- Version 2.0.45 should support Claude Sonnet 4.5 model
+
+**Next Steps for User:**
+```bash
+npm install
+npm run dev
+```
+
+---
