@@ -1,6 +1,6 @@
 // Core agent logic using Vercel AI SDK
 
-import { anthropic } from '@ai-sdk/anthropic';
+import { openai } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { getAgentTools } from './tools';
 import { getSystemPrompt, getUserMessageTemplate } from './prompts';
@@ -15,9 +15,9 @@ export async function processAgentRequest(
 ): Promise<AgentResponse> {
   try {
     const formattedMessage = getUserMessageTemplate(userMessage, excelData);
-    
+
     const result = await generateText({
-      model: anthropic('claude-sonnet-4-5-20250929'),
+      model: openai('gpt-5'),
       messages: [
         { role: 'system', content: getSystemPrompt() },
         ...conversationHistory,

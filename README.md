@@ -8,7 +8,7 @@ De Chart Agent MVP is een gespecialiseerde AI-agent gebouwd met:
 - **Runtime:** Node.js 24.11.0 (LTS)
 - **Taal:** TypeScript
 - **Web Framework:** Next.js 14 (App Router)
-- **LLM:** Anthropic Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
+- **LLM:** OpenAI GPT-5
 - **Agent Framework:** Vercel AI SDK v5
 - **Grafieken:** D3.js (web) en d3-node (CLI)
 - **Excel Verwerking:** xlsx library
@@ -29,7 +29,7 @@ De Chart Agent MVP is een gespecialiseerde AI-agent gebouwd met:
 
 - Node.js 20.18.1 (LTS) - gebruik nvm voor eenvoudige installatie
 - npm of yarn
-- Anthropic API key
+- OpenAI API key
 
 ### Stappen
 
@@ -56,9 +56,9 @@ npm install
 cp .env.local.example .env.local
 ```
 
-4. Voeg je Anthropic API key toe aan `.env.local`:
+4. Voeg je OpenAI API key toe aan `.env.local`:
 ```env
-ANTHROPIC_API_KEY=sk-ant-your-api-key-here
+OPENAI_API_KEY=sk-your-api-key-here
 ```
 
 ## Gebruik
@@ -213,7 +213,7 @@ Logs worden getoond in de console. Voor de CLI, zie terminal output. Voor de web
 
 ## Troubleshooting
 
-### "ANTHROPIC_API_KEY is not set"
+### "OPENAI_API_KEY is not set"
 Zorg ervoor dat je `.env.local` bestand bestaat en een geldige API key bevat.
 
 ### "Cannot find module"
