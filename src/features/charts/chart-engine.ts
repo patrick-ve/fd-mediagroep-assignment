@@ -25,9 +25,12 @@ export class ChartEngine {
 
   async createBarChart(
     data: ChartData,
-    colorScheme: ColorScheme
-  ): Promise<{ svgString: string; filePath: string; echartsOptions: EChartsOption }> {
-    await this.ensureOutputDir();
+    colorScheme: ColorScheme,
+    saveToDisk: boolean = true
+  ): Promise<{ svgString: string; filePath?: string; echartsOptions: EChartsOption }> {
+    if (saveToDisk) {
+      await this.ensureOutputDir();
+    }
 
     const colors = BRAND_COLORS[colorScheme];
     const echartsOptions = this.getBarChartOptions(data, colors);
@@ -44,16 +47,22 @@ export class ChartEngine {
     const svgString = chart.renderToSVGString();
     chart.dispose();
 
-    const filePath = await this.saveChart(svgString, 'bar');
+    let filePath: string | undefined;
+    if (saveToDisk) {
+      filePath = await this.saveChart(svgString, 'bar');
+    }
 
     return { svgString, filePath, echartsOptions };
   }
 
   async createLineChart(
     data: ChartData,
-    colorScheme: ColorScheme
-  ): Promise<{ svgString: string; filePath: string; echartsOptions: EChartsOption }> {
-    await this.ensureOutputDir();
+    colorScheme: ColorScheme,
+    saveToDisk: boolean = true
+  ): Promise<{ svgString: string; filePath?: string; echartsOptions: EChartsOption }> {
+    if (saveToDisk) {
+      await this.ensureOutputDir();
+    }
 
     const colors = BRAND_COLORS[colorScheme];
     const echartsOptions = this.getLineChartOptions(data, colors);
@@ -70,7 +79,10 @@ export class ChartEngine {
     const svgString = chart.renderToSVGString();
     chart.dispose();
 
-    const filePath = await this.saveChart(svgString, 'line');
+    let filePath: string | undefined;
+    if (saveToDisk) {
+      filePath = await this.saveChart(svgString, 'line');
+    }
 
     return { svgString, filePath, echartsOptions };
   }
