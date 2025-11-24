@@ -2,10 +2,14 @@
 
 // Evaluation runner
 
+import { config } from 'dotenv';
 import { runFilteringEval, EvalResult as FilteringResult } from './eval-filtering';
 import { runAccuracyEval, EvalResult as AccuracyResult } from './eval-accuracy';
 import fs from 'fs/promises';
 import path from 'path';
+
+// Load environment variables from .env.local
+config({ path: '.env.local' });
 
 interface AllEvalResults {
   timestamp: string;
@@ -27,9 +31,9 @@ async function runAllEvals(): Promise<void> {
   console.log('╚════════════════════════════════════════════════════════╝\n');
 
   // Check for API key
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.error('❌ Error: ANTHROPIC_API_KEY environment variable is not set');
-    console.error('Set it with: export ANTHROPIC_API_KEY=your-api-key');
+  if (!process.env.OPENAI_API_KEY) {
+    console.error('❌ Error: OPENAI_API_KEY environment variable is not set');
+    console.error('Set it with: export OPENAI_API_KEY=your-api-key');
     process.exit(1);
   }
 
