@@ -80,6 +80,8 @@ export async function runAccuracyEval(): Promise<EvalResult> {
   for (const testCase of testCases) {
     console.log(`Testing: ${testCase.description}`);
     console.log(`Input: "${testCase.input.substring(0, 60)}..."`);
+    console.log(`Expected labels: [${testCase.expectedLabels.join(', ')}]`);
+    console.log(`Expected values: [${testCase.expectedValues.join(', ')}]`);
 
     try {
       const response = await processAgentRequest(
@@ -88,31 +90,52 @@ export async function runAccuracyEval(): Promise<EvalResult> {
         chartEngine
       );
 
-      // For this eval, we need to check if the agent called the chart creation tool
-      // Since we can't directly access the tool parameters, we'll check if a chart was created
-      // In a real implementation, you'd want to capture the tool call parameters
-      
-      // For now, we'll mark as passed if a chart was successfully created
-      // A more robust implementation would parse the agent's response or capture tool calls
-      const testPassed = response.success && response.chartPath !== undefined;
+      if (!response.success || !response.chartPath) {
+        failed++;
+        console.log(`Received: No chart created`);
+        console.log(`❌ FAILED\n`);
+        results.push({
+          testCase,
+          passed: false,
+          reason: 'No chart created'
+        });
+        continue;
+      }
+
+      // Get actual data from chart response
+      const actualLabels = response.chartData?.labels || [];
+      const actualValues = response.chartData?.values || [];
+
+      console.log(`Received labels: [${actualLabels.join(', ')}]`);
+      console.log(`Received values: [${actualValues.join(', ')}]`);
+
+      // Check if labels and values match expected
+      const labelsMatch = arraysEqual(actualLabels, testCase.expectedLabels);
+      const valuesMatch = arraysEqual(actualValues, testCase.expectedValues);
+      const testPassed = labelsMatch && valuesMatch;
 
       if (testPassed) {
         passed++;
-        console.log(`✅ PASSED - Chart created successfully\n`);
+        console.log(`✅ PASSED\n`);
       } else {
         failed++;
-        console.log(`❌ FAILED - No chart created\n`);
+        if (!labelsMatch) console.log(`Labels mismatch!`);
+        if (!valuesMatch) console.log(`Values mismatch!`);
+        console.log(`❌ FAILED\n`);
       }
 
       results.push({
         testCase,
         passed: testPassed,
-        reason: response.message.substring(0, 100)
+        actualLabels,
+        actualValues,
+        reason: testPassed ? 'Data matches' : 'Data mismatch'
       });
     } catch (error) {
       failed++;
-      console.log(`❌ FAILED - Error: ${error instanceof Error ? error.message : 'Unknown'}\n`);
-      
+      console.log(`Received: Error - ${error instanceof Error ? error.message : 'Unknown'}`);
+      console.log(`❌ FAILED\n`);
+
       results.push({
         testCase,
         passed: false,
@@ -121,8 +144,6 @@ export async function runAccuracyEval(): Promise<EvalResult> {
     }
   }
 
-  console.log('\n⚠️  Note: This eval checks if charts are created successfully.');
-  console.log('For full data accuracy validation, inspect the generated chart files manually.\n');
 
   return {
     testName: 'Data Accuracy Evaluation',
