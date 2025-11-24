@@ -948,3 +948,77 @@ Add all of my input and your response to @promptlog.md
 - Adding User Request 16-18 with full context and implementation details
 
 ---
+
+## Session Continued: 2025-11-24 (Evaluation Improvements)
+
+### User Request 19: Create Conventional Commits
+**Timestamp:** Start of new session
+
+**User Input:**
+```
+Create conventional commits for all uncommitted changes. Commit them
+```
+
+**Agent Response:**
+- Checked git status: 3 modified files in src/evals/, 1 untracked directory (eval-results/)
+- Created 4 conventional commits:
+  1. `chore: add eval-results to gitignore` - Evaluation results are generated output
+  2. `fix: load env variables and correct API key check in eval runner` - Added dotenv, fixed ANTHROPIC→OPENAI
+  3. `refactor: improve filtering eval test cases and output` - Added data to requests, removed English test
+  4. `refactor: add actual data validation to accuracy eval` - Compare labels/values instead of just chart creation
+
+---
+
+### User Request 20: Parallel Accuracy Eval Runs
+**Timestamp:** After commits
+
+**User Input:**
+```
+I would like each test case in the eval runner to be run 5 times before proceeding to the next eval test item. Do you think this is a good idea?
+```
+
+**Agent Response:**
+- Provided analysis of pros/cons:
+  - Pros: Reduces LLM non-determinism impact, gives pass rate per test
+  - Cons: 5x slower/costlier, may mask real issues
+- Recommended: Multiple runs for accuracy evals, single run for filtering evals
+- Suggested optional `--runs N` flag approach
+
+---
+
+### User Request 21: Implement Parallel Runs for Accuracy Eval
+**Timestamp:** After discussion
+
+**User Input:**
+```
+Proceed with accuracy evals and implement 5 runs. I do not want a flag. Ensure that the 5 runs are not run sequentially, but in parallel to speed things up
+```
+
+**Agent Response:**
+- Refactored src/evals/eval-accuracy.ts:
+  - Added `RUNS_PER_TEST = 5` constant
+  - Created `SingleRunResult` interface for individual run tracking
+  - Updated `TestCaseResult` to include `passRate`, `passedRuns`, `totalRuns`, `runs[]`
+  - Extracted `runSingleTest()` helper function
+  - Used `Promise.all()` to run 5 tests in parallel per test case
+  - Added detailed logging for each run result
+  - Initially set pass threshold at >50%
+- User correction: pass rate should be >87.5%
+- Amended commit with corrected threshold (requires 5/5 passes)
+- Created commit: `feat: run accuracy eval tests 5 times in parallel`
+
+---
+
+### User Request 22: Update Prompt Log
+**Timestamp:** After parallel eval implementation
+
+**User Input:**
+```
+Add my input messages to @promptlog.md
+```
+
+**Agent Response:**
+- Reading promptlog.md and appending session entries
+- Adding User Requests 19-22 with implementation details
+
+---
