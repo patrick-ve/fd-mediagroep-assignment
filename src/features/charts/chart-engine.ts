@@ -69,10 +69,10 @@ export class ChartEngine {
       .enter()
       .append('rect')
       .attr('class', 'bar')
-      .attr('x', (d, i) => x(data.labels[i]) || 0)
-      .attr('y', d => y(d))
+      .attr('x', (_d: number, i: number) => x(data.labels[i]) || 0)
+      .attr('y', (d: number) => y(d))
       .attr('width', x.bandwidth())
-      .attr('height', d => chartHeight - y(d))
+      .attr('height', (d: number) => chartHeight - y(d))
       .attr('fill', colors.primary);
 
     // X Axis
@@ -189,8 +189,8 @@ export class ChartEngine {
       .enter()
       .append('circle')
       .attr('class', 'point')
-      .attr('cx', (d, i) => x(data.labels[i]) || 0)
-      .attr('cy', d => y(d))
+      .attr('cx', (_d: number, i: number) => x(data.labels[i]) || 0)
+      .attr('cy', (d: number) => y(d))
       .attr('r', 5)
       .attr('fill', colors.primary);
 
