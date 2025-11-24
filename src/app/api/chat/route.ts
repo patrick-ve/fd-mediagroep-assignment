@@ -1,7 +1,7 @@
 // API route for chat interactions using AI SDK UI pattern
 
 import { openai } from '@ai-sdk/openai';
-import { streamText, stepCountIs, convertToModelMessages } from 'ai';
+import { streamText, convertToModelMessages } from 'ai';
 import { getAgentTools } from '@/features/agent/tools';
 import { getSystemPrompt } from '@/features/agent/prompts';
 import { ChartEngine } from '@/features/charts/chart-engine';
@@ -16,7 +16,6 @@ export async function POST(request: Request) {
     system: getSystemPrompt(),
     messages: convertToModelMessages(messages),
     tools: getAgentTools(chartEngine),
-    stopWhen: stepCountIs(5),
   });
 
   return result.toUIMessageStreamResponse();
