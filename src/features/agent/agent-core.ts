@@ -17,7 +17,7 @@ export async function processAgentRequest(
     const formattedMessage = getUserMessageTemplate(userMessage, excelData);
     
     const result = await generateText({
-      model: anthropic('claude-sonnet-4-20250514'),
+      model: anthropic('claude-sonnet-4-5-20250929'),
       messages: [
         { role: 'system', content: getSystemPrompt() },
         ...conversationHistory,

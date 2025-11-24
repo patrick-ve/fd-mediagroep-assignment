@@ -14,14 +14,13 @@
     "next": "^14.2.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "@ai-sdk/anthropic": "^1.0.2",
-    "ai": "^5.0.0",
+    "@ai-sdk/anthropic": "^2.0.45",
+    "ai": "^5.0.101",
     "d3": "^7.9.0",
     "d3-node": "^3.0.0",
     "xlsx": "^0.18.5",
     "zod": "^3.23.0",
-    "jsdom": "^24.0.0",
-    "canvas": "^2.11.2"
+    "jsdom": "^24.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
