@@ -3,6 +3,8 @@
 import { processAgentRequest } from '../features/agent/agent-core';
 import { ChartEngine } from '../features/charts/chart-engine';
 
+const RUNS_PER_TEST = 5;
+
 interface AccuracyTestCase {
   input: string;
   expectedLabels: string[];
@@ -10,12 +12,19 @@ interface AccuracyTestCase {
   description: string;
 }
 
-interface TestCaseResult {
-  testCase: AccuracyTestCase;
+interface SingleRunResult {
   passed: boolean;
   actualLabels?: string[];
   actualValues?: number[];
   reason?: string;
+}
+
+interface TestCaseResult {
+  testCase: AccuracyTestCase;
+  passRate: number;
+  passedRuns: number;
+  totalRuns: number;
+  runs: SingleRunResult[];
 }
 
 export interface EvalResult {
@@ -69,9 +78,48 @@ function arraysEqual(arr1: any[], arr2: any[]): boolean {
   });
 }
 
+async function runSingleTest(
+  testCase: AccuracyTestCase,
+  chartEngine: ChartEngine
+): Promise<SingleRunResult> {
+  try {
+    const response = await processAgentRequest(
+      testCase.input,
+      [],
+      chartEngine
+    );
+
+    if (!response.success || !response.chartPath) {
+      return {
+        passed: false,
+        reason: 'No chart created'
+      };
+    }
+
+    const actualLabels = response.chartData?.labels || [];
+    const actualValues = response.chartData?.values || [];
+
+    const labelsMatch = arraysEqual(actualLabels, testCase.expectedLabels);
+    const valuesMatch = arraysEqual(actualValues, testCase.expectedValues);
+    const passed = labelsMatch && valuesMatch;
+
+    return {
+      passed,
+      actualLabels,
+      actualValues,
+      reason: passed ? 'Data matches' : `${!labelsMatch ? 'Labels mismatch' : ''}${!labelsMatch && !valuesMatch ? ', ' : ''}${!valuesMatch ? 'Values mismatch' : ''}`
+    };
+  } catch (error) {
+    return {
+      passed: false,
+      reason: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
 export async function runAccuracyEval(): Promise<EvalResult> {
-  console.log('🧪 Running Data Accuracy Evaluation...\n');
-  
+  console.log(`🧪 Running Data Accuracy Evaluation (${RUNS_PER_TEST} runs per test)...\n`);
+
   const chartEngine = new ChartEngine();
   const results: TestCaseResult[] = [];
   let passed = 0;
@@ -83,67 +131,41 @@ export async function runAccuracyEval(): Promise<EvalResult> {
     console.log(`Expected labels: [${testCase.expectedLabels.join(', ')}]`);
     console.log(`Expected values: [${testCase.expectedValues.join(', ')}]`);
 
-    try {
-      const response = await processAgentRequest(
-        testCase.input,
-        [],
-        chartEngine
-      );
+    // Run all iterations in parallel
+    const runPromises = Array.from({ length: RUNS_PER_TEST }, () =>
+      runSingleTest(testCase, chartEngine)
+    );
+    const runs = await Promise.all(runPromises);
 
-      if (!response.success || !response.chartPath) {
-        failed++;
-        console.log(`Received: No chart created`);
-        console.log(`❌ FAILED\n`);
-        results.push({
-          testCase,
-          passed: false,
-          reason: 'No chart created'
-        });
-        continue;
-      }
+    const passedRuns = runs.filter(r => r.passed).length;
+    const passRate = passedRuns / RUNS_PER_TEST;
 
-      // Get actual data from chart response
-      const actualLabels = response.chartData?.labels || [];
-      const actualValues = response.chartData?.values || [];
+    // Log results from each run
+    runs.forEach((run, idx) => {
+      const status = run.passed ? '✓' : '✗';
+      const labels = run.actualLabels ? `[${run.actualLabels.join(', ')}]` : 'N/A';
+      const values = run.actualValues ? `[${run.actualValues.join(', ')}]` : 'N/A';
+      console.log(`  Run ${idx + 1}: ${status} labels=${labels} values=${values}`);
+    });
 
-      console.log(`Received labels: [${actualLabels.join(', ')}]`);
-      console.log(`Received values: [${actualValues.join(', ')}]`);
-
-      // Check if labels and values match expected
-      const labelsMatch = arraysEqual(actualLabels, testCase.expectedLabels);
-      const valuesMatch = arraysEqual(actualValues, testCase.expectedValues);
-      const testPassed = labelsMatch && valuesMatch;
-
-      if (testPassed) {
-        passed++;
-        console.log(`✅ PASSED\n`);
-      } else {
-        failed++;
-        if (!labelsMatch) console.log(`Labels mismatch!`);
-        if (!valuesMatch) console.log(`Values mismatch!`);
-        console.log(`❌ FAILED\n`);
-      }
-
-      results.push({
-        testCase,
-        passed: testPassed,
-        actualLabels,
-        actualValues,
-        reason: testPassed ? 'Data matches' : 'Data mismatch'
-      });
-    } catch (error) {
+    // Consider test passed if pass rate exceeds 87.5% (at least 5/5 or 4/5 with rounding)
+    const testPassed = passRate > 0.875;
+    if (testPassed) {
+      passed++;
+      console.log(`✅ PASSED (${passedRuns}/${RUNS_PER_TEST} runs)\n`);
+    } else {
       failed++;
-      console.log(`Received: Error - ${error instanceof Error ? error.message : 'Unknown'}`);
-      console.log(`❌ FAILED\n`);
-
-      results.push({
-        testCase,
-        passed: false,
-        reason: error instanceof Error ? error.message : 'Unknown error'
-      });
+      console.log(`❌ FAILED (${passedRuns}/${RUNS_PER_TEST} runs)\n`);
     }
-  }
 
+    results.push({
+      testCase,
+      passRate,
+      passedRuns,
+      totalRuns: RUNS_PER_TEST,
+      runs
+    });
+  }
 
   return {
     testName: 'Data Accuracy Evaluation',
