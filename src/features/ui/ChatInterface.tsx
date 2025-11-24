@@ -4,7 +4,6 @@
 
 import { UIMessage } from 'ai';
 import { ChartDisplay } from './ChartDisplay';
-import { ColorScheme } from '@/lib/types';
 
 interface ChatInterfaceProps {
   messages: UIMessage[];
@@ -12,7 +11,6 @@ interface ChatInterfaceProps {
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   isLoading: boolean;
-  colorScheme: ColorScheme;
 }
 
 export function ChatInterface({
@@ -20,8 +18,7 @@ export function ChatInterface({
   input,
   handleInputChange,
   handleSubmit,
-  isLoading,
-  colorScheme
+  isLoading
 }: ChatInterfaceProps) {
 
   return (
@@ -84,9 +81,10 @@ export function ChatInterface({
                       );
                     }
                     if (part.state === 'output-available' && part.output) {
+                      const output = part.output as any;
                       return (
                         <div key={index} className="w-full">
-                          <ChartDisplay data={part.output as any} colorScheme={colorScheme} />
+                          <ChartDisplay data={output} colorScheme={output.colorScheme} />
                         </div>
                       );
                     }
@@ -104,9 +102,10 @@ export function ChatInterface({
                       );
                     }
                     if (part.state === 'output-available' && part.output) {
+                      const output = part.output as any;
                       return (
                         <div key={index} className="w-full">
-                          <ChartDisplay data={part.output as any} colorScheme={colorScheme} />
+                          <ChartDisplay data={output} colorScheme={output.colorScheme} />
                         </div>
                       );
                     }
