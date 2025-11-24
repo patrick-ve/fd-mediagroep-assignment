@@ -7,7 +7,7 @@ export function getAgentTools(chartEngine: ChartEngine) {
   return {
     create_bar_chart: tool({
       description: 'Maak een staafgrafiek met de opgegeven data in FD- of BNR-kleuren',
-      parameters: jsonSchema<{
+      inputSchema: jsonSchema<{
         labels: string[];
         values: number[];
         title: string;
@@ -62,10 +62,10 @@ export function getAgentTools(chartEngine: ChartEngine) {
         }
       }
     }),
-    
+
     create_line_chart: tool({
       description: 'Maak een lijngrafiek met de opgegeven data in FD- of BNR-kleuren',
-      parameters: jsonSchema<{
+      inputSchema: jsonSchema<{
         labels: string[];
         values: number[];
         title: string;
