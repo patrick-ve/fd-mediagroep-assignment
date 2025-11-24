@@ -13,8 +13,8 @@ graph TB
     end
 
     subgraph "API Layer"
-        CHATAPI[/api/chat<br/>POST Endpoint]
-        UPLOADAPI[/api/upload<br/>File Upload]
+        CHATAPI["API: /api/chat<br/>POST Endpoint"]
+        UPLOADAPI["API: /api/upload<br/>File Upload"]
     end
 
     subgraph "Agent Core - Vercel AI SDK v5"
