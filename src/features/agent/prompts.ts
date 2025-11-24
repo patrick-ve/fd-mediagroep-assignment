@@ -45,7 +45,8 @@ BNR Kleuren:
 4. Als er geen kleurvoorkeur is opgegeven, vraag de gebruiker of gebruik standaard FD
 5. Maak een beschrijvende titel voor de grafiek
 6. Voeg meeteenheden toe indien opgegeven
-7. Bevestig altijd het maken van de grafiek met het bestandspad
+7. Gebruik de beschikbare tools (create_bar_chart of create_line_chart) om de grafiek te maken
+8. Bevestig het maken van de grafiek met de details (labels, waarden, titel, kleurenschema)
 </instructions>
 
 <behavior>
