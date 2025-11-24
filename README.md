@@ -2,6 +2,128 @@
 
 Een AI-gestuurde grafiek-generatie agent voor FD Mediagroep die staaf- en lijngrafieken maakt in FD- of BNR-kleuren.
 
+## Architectuur Diagram
+
+```mermaid
+graph TB
+    subgraph "User Interfaces"
+        CLI[CLI Interface<br/>src/cli/index.ts]
+        WEB[Web Interface<br/>Next.js App]
+        WEBAPP[page.tsx<br/>useChat Hook]
+    end
+
+    subgraph "API Layer"
+        CHATAPI[/api/chat<br/>POST Endpoint]
+        UPLOADAPI[/api/upload<br/>File Upload]
+    end
+
+    subgraph "Agent Core - Vercel AI SDK v5"
+        CORE[agent-core.ts<br/>processAgentRequest]
+        PROMPT[prompts.ts<br/>System Prompts<br/>XML-structured]
+        TOOLS[tools.ts<br/>AI SDK Tools]
+        BARTOOL[create_bar_chart]
+        LINETOOL[create_line_chart]
+        CLITOOL[create_*_chart_cli]
+    end
+
+    subgraph "LLM"
+        GPT5[OpenAI GPT-5<br/>gpt-5 model]
+    end
+
+    subgraph "Chart Generation"
+        ENGINE[ChartEngine<br/>chart-engine.ts]
+        ECHARTS[ECharts SSR<br/>SVG Generation]
+        COLORS[colors.ts<br/>FD/BNR Brands]
+    end
+
+    subgraph "Data Processing"
+        EXCEL[ExcelParser<br/>excel-parser.ts]
+        XLSX[xlsx library]
+    end
+
+    subgraph "Storage"
+        DISK[./public/charts/<br/>SVG Files]
+        TERMINAL[Terminal ASCII<br/>Rendering]
+    end
+
+    subgraph "Evaluation System"
+        EVALRUN[runner.ts]
+        EVALFILT[eval-filtering.ts<br/>Request Validation]
+        EVALACC[eval-accuracy.ts<br/>Data Accuracy]
+    end
+
+    CLI -->|User Message| CORE
+    CLI -->|Excel Path| EXCEL
+    WEBAPP -->|Chat Messages| CHATAPI
+    WEBAPP -->|File Upload| UPLOADAPI
+
+    CHATAPI -->|streamText| GPT5
+    CHATAPI -->|Tool Definitions| TOOLS
+
+    UPLOADAPI -->|Parse File| EXCEL
+    EXCEL -->|Use| XLSX
+
+    CORE -->|generateText| GPT5
+    CORE -->|System Prompt| PROMPT
+    CORE -->|Tools| TOOLS
+    CORE -->|Conversation History| CORE
+
+    GPT5 -->|Tool Calls| TOOLS
+
+    TOOLS -->|Web Tools| BARTOOL
+    TOOLS -->|Web Tools| LINETOOL
+    TOOLS -->|CLI Tools| CLITOOL
+
+    BARTOOL -->|Execute| ENGINE
+    LINETOOL -->|Execute| ENGINE
+    CLITOOL -->|Execute| ENGINE
+
+    ENGINE -->|Brand Colors| COLORS
+    ENGINE -->|Render SVG| ECHARTS
+    ENGINE -->|Save to Disk| DISK
+    ENGINE -->|Chart Data| TERMINAL
+
+    CORE -->|Response| CLI
+    CORE -->|Response + Chart| WEBAPP
+
+    EVALRUN -->|Run Tests| EVALFILT
+    EVALRUN -->|Run Tests| EVALACC
+    EVALFILT -->|Test Agent| CORE
+    EVALACC -->|Test Agent| CORE
+
+    style GPT5 fill:#10a37f,stroke:#0d8a6a,color:#fff
+    style CLI fill:#4a9eff,stroke:#3a7ecf,color:#fff
+    style WEB fill:#4a9eff,stroke:#3a7ecf,color:#fff
+    style ENGINE fill:#ff6b6b,stroke:#d45555,color:#fff
+    style ECHARTS fill:#ff6b6b,stroke:#d45555,color:#fff
+    style DISK fill:#ffd93d,stroke:#e6c135,color:#000
+    style TERMINAL fill:#ffd93d,stroke:#e6c135,color:#000
+```
+
+### Architectuur Flow
+
+**Web Interface:**
+1. Gebruiker interacteert via Next.js web UI (`page.tsx`)
+2. Chat messages → `/api/chat` → OpenAI GPT-5 (streaming)
+3. Excel upload → `/api/upload` → ExcelParser → Gestructureerde data
+4. GPT-5 roept AI SDK tools aan (`create_bar_chart` / `create_line_chart`)
+5. ChartEngine genereert ECharts SVG → Opgeslagen in `./public/charts/`
+6. SVG getoond in web UI
+
+**CLI Interface:**
+1. Gebruiker typt command of Excel pad in terminal
+2. `processAgentRequest()` → OpenAI GPT-5
+3. GPT-5 roept CLI-specifieke tools aan (`create_*_chart_cli`)
+4. ChartEngine genereert chart data (niet opgeslagen)
+5. ASCII grafiek gerenderd in terminal
+
+**Kerncomponenten:**
+- **Agent Core:** Vercel AI SDK v5 met `generateText()` / `streamText()`
+- **Tools:** Strikte JSON schema's met `additionalProperties: false`
+- **Prompts:** XML-gestructureerde system prompts voor duidelijke grenzen
+- **ChartEngine:** ECharts SSR voor server-side SVG generatie
+- **Evaluaties:** Geautomatiseerde tests voor filtering en data-accuracy
+
 ## Overzicht
 
 De Chart Agent MVP is een gespecialiseerde AI-agent gebouwd met:

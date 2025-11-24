@@ -14,6 +14,7 @@ export interface ChartData {
   title: string;
   unit?: string;
   chartType: 'bar' | 'line';
+  colorScheme?: ColorScheme;
 }
 
 export interface AgentResponse {

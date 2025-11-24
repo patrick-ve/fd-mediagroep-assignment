@@ -14,6 +14,8 @@ import { ExcelParser } from '../features/parsers/excel-parser';
 import { ConversationMessage, ChartData, ColorScheme } from '@/lib/types';
 import { isValidExcelFile } from '@/lib/utils';
 import fs from 'fs';
+import { LineChart } from 'ansi-chart';
+import chalk from 'chalk';
 
 class CLIInterface {
   private chartEngine: ChartEngine;
@@ -123,85 +125,48 @@ class CLIInterface {
   }
 
   private renderChartInTerminal(chartData: ChartData): void {
-    const { labels, values, title, unit, chartType } = chartData;
+    const { labels, values, title, unit, chartType, colorScheme = 'fd' } = chartData;
+
+    // Get brand colors
+    const colors = {
+      fd: { primary: '#379596', hex: chalk.hex('#379596') },
+      bnr: { primary: '#ffd200', hex: chalk.hex('#ffd200') }
+    };
+    const brandColor = colors[colorScheme];
 
     // Print title
-    console.log(`\n${title}\n${'─'.repeat(title.length)}\n`);
-
-    // Find max value for scaling
-    const maxValue = Math.max(...values);
-    const maxBarWidth = 50; // Max width in characters
+    console.log(`\n${brandColor.hex(title)}\n${brandColor.hex('─'.repeat(title.length))}\n`);
 
     if (chartType === 'bar') {
-      // Render bar chart
+      // Render bar chart with colored bars using chalk
+      const maxValue = Math.max(...values);
+      const maxBarWidth = 50;
+
       for (let i = 0; i < labels.length; i++) {
         const label = labels[i];
         const value = values[i];
         const barWidth = Math.round((value / maxValue) * maxBarWidth);
-        const bar = '█'.repeat(barWidth);
+        const bar = brandColor.hex('█'.repeat(barWidth));
 
-        // Format: Label: ████████ Value
         const displayValue = unit ? `${value} ${unit}` : value;
         console.log(`${label.padEnd(15)} ${bar} ${displayValue}`);
       }
     } else if (chartType === 'line') {
-      // Render simple line chart using sparkline-like visualization
-      const height = 10;
-      const width = Math.min(labels.length * 3, 60);
+      // Render line chart using ansi-chart with brand colors
+      const lineChart = new LineChart({
+        xLabel: unit || '',
+        yLabel: '',
+        height: 12,
+      });
 
-      // Normalize values to fit in height
-      const normalizedValues = values.map(v => Math.round((v / maxValue) * (height - 1)));
+      // ansi-chart expects just the values array
+      lineChart.plot(values, brandColor.primary);
 
-      // Create 2D grid
-      const grid: string[][] = Array(height).fill(0).map(() => Array(width).fill(' '));
-
-      // Plot points and lines
-      for (let i = 0; i < values.length; i++) {
-        const x = Math.round((i / (values.length - 1)) * (width - 1));
-        const y = height - 1 - normalizedValues[i];
-
-        if (y >= 0 && y < height && x >= 0 && x < width) {
-          grid[y][x] = '●';
-
-          // Draw line to next point
-          if (i < values.length - 1) {
-            const nextX = Math.round(((i + 1) / (values.length - 1)) * (width - 1));
-            const nextY = height - 1 - normalizedValues[i + 1];
-
-            // Simple line drawing
-            const steps = Math.abs(nextX - x);
-            for (let step = 0; step <= steps; step++) {
-              const interpX = x + Math.round((nextX - x) * (step / steps));
-              const interpY = y + Math.round((nextY - y) * (step / steps));
-              if (interpY >= 0 && interpY < height && interpX >= 0 && interpX < width) {
-                if (grid[interpY][interpX] === ' ') {
-                  grid[interpY][interpX] = '─';
-                }
-              }
-            }
-          }
-        }
-      }
-
-      // Print grid with Y-axis labels
-      for (let y = 0; y < height; y++) {
-        const value = Math.round((1 - y / (height - 1)) * maxValue);
-        const label = String(value).padStart(6);
-        console.log(`${label} │ ${grid[y].join('')}`);
-      }
-
-      // Print X-axis
-      console.log(`${''.padStart(6)} └${'─'.repeat(width)}`);
-
-      // Print X-axis labels
-      const labelStep = Math.max(1, Math.floor(labels.length / 5));
-      let xAxisLabels = '       ';
-      for (let i = 0; i < labels.length; i += labelStep) {
-        const x = Math.round((i / (labels.length - 1)) * (width - 1));
-        const label = labels[i].substring(0, 8);
-        xAxisLabels += label.padEnd(width / 5, ' ');
-      }
-      console.log(xAxisLabels.substring(0, width + 8));
+      // Print labels below the chart
+      console.log('\nLabels:');
+      labels.forEach((label, i) => {
+        console.log(`  ${i}: ${label}`);
+      });
 
       if (unit) {
         console.log(`\n(${unit})`);

@@ -45,7 +45,8 @@ export async function processAgentRequest(
             values: resultObj.values,
             title: resultObj.title,
             unit: resultObj.unit,
-            chartType: resultObj.chartType
+            chartType: resultObj.chartType,
+            colorScheme: resultObj.colorScheme
           };
         }
       }
