@@ -14,7 +14,7 @@ export function getAgentTools(chartEngine: ChartEngine) {
         title: z.string().describe('Grafiek titel'),
         unit: z.string().optional().describe('Meeteenheid'),
         colorScheme: z.enum(['fd', 'bnr']).describe('Kleurenschema (FD of BNR)')
-      }),
+      }).strict(),
       execute: async ({ labels, values, title, unit, colorScheme }) => {
         try {
           const result = await chartEngine.createBarChart(
@@ -43,7 +43,7 @@ export function getAgentTools(chartEngine: ChartEngine) {
         title: z.string().describe('Grafiek titel'),
         unit: z.string().optional().describe('Meeteenheid'),
         colorScheme: z.enum(['fd', 'bnr']).describe('Kleurenschema (FD of BNR)')
-      }),
+      }).strict(),
       execute: async ({ labels, values, title, unit, colorScheme }) => {
         try {
           const result = await chartEngine.createLineChart(
