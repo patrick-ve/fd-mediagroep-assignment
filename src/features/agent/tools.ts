@@ -56,7 +56,8 @@ export function getAgentTools(chartEngine: ChartEngine) {
             unit,
             chartType: 'bar' as const,
             colorScheme,
-            filePath: result.filePath
+            filePath: result.filePath,
+            echartsOptions: result.echartsOptions
           };
         } catch (error) {
           throw new Error(error instanceof Error ? error.message : 'Onbekende fout');
@@ -115,7 +116,8 @@ export function getAgentTools(chartEngine: ChartEngine) {
             unit,
             chartType: 'line' as const,
             colorScheme,
-            filePath: result.filePath
+            filePath: result.filePath,
+            echartsOptions: result.echartsOptions
           };
         } catch (error) {
           throw new Error(error instanceof Error ? error.message : 'Onbekende fout');
