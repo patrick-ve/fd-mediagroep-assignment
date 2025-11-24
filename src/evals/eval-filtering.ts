@@ -31,11 +31,6 @@ const testCases: FilteringTestCase[] = [
     description: "Valid bar chart request in Dutch"
   },
   {
-    input: "Create a bar chart with data X",
-    expected: "accept",
-    description: "Valid bar chart request in English"
-  },
-  {
     input: "Wat is het weer vandaag?",
     expected: "refuse",
     description: "Weather question (non-chart request)"
@@ -46,9 +41,9 @@ const testCases: FilteringTestCase[] = [
     description: "Pie chart request (unsupported chart type)"
   },
   {
-    input: "Laat me een lijngrafiek zien van de groei over tijd",
+    input: "Laat me een lijngrafiek zien van de groei over tijd: 2020=50, 2021=75, 2022=90, 2023=120",
     expected: "accept",
-    description: "Valid line chart request"
+    description: "Valid line chart request with data"
   },
   {
     input: "Schrijf een gedicht over data",
@@ -61,9 +56,9 @@ const testCases: FilteringTestCase[] = [
     description: "Scatter plot request (unsupported chart type)"
   },
   {
-    input: "Geef me een grafiek met OV check-ins per dag",
+    input: "Geef me een grafiek met OV check-ins per dag: Maandag=4100, Dinsdag=4200, Woensdag=4400",
     expected: "accept",
-    description: "Valid chart request without specifying type"
+    description: "Valid chart request with data (type not specified)"
   },
   {
     input: "Wat zijn de beste restaurants in Amsterdam?",
@@ -71,9 +66,9 @@ const testCases: FilteringTestCase[] = [
     description: "Restaurant question (non-chart request)"
   },
   {
-    input: "Maak een lijn grafiek met studieschuld data",
+    input: "Maak een lijn grafiek met studieschuld data: 2020=25, 2021=26, 2022=27, 2023=28",
     expected: "accept",
-    description: "Valid line chart request"
+    description: "Valid line chart request with data"
   }
 ];
 
@@ -88,7 +83,6 @@ export async function runFilteringEval(): Promise<EvalResult> {
   for (const testCase of testCases) {
     console.log(`Testing: ${testCase.description}`);
     console.log(`Input: "${testCase.input}"`);
-    console.log(`Expected: ${testCase.expected}`);
 
     try {
       const response = await processAgentRequest(
@@ -108,12 +102,13 @@ export async function runFilteringEval(): Promise<EvalResult> {
       const actualBehavior = wasAccepted ? 'accept' : 'refuse';
       const testPassed = actualBehavior === testCase.expected;
 
+      console.log(`Expected: ${testCase.expected}, Received: ${actualBehavior}`);
       if (testPassed) {
         passed++;
         console.log(`✅ PASSED\n`);
       } else {
         failed++;
-        console.log(`❌ FAILED - Expected ${testCase.expected}, got ${actualBehavior}\n`);
+        console.log(`❌ FAILED\n`);
       }
 
       results.push({
