@@ -111,9 +111,9 @@ class CLIInterface {
 }
 
 // Check for API key
-if (!process.env.ANTHROPIC_API_KEY) {
-  console.error('❌ Fout: ANTHROPIC_API_KEY omgevingsvariabele is niet ingesteld');
-  console.error('Stel deze in via: export ANTHROPIC_API_KEY=your-api-key');
+if (!process.env.OPENAI_API_KEY) {
+  console.error('❌ Fout: OPENAI_API_KEY omgevingsvariabele is niet ingesteld');
+  console.error('Stel deze in via: export OPENAI_API_KEY=your-api-key');
   process.exit(1);
 }
 
